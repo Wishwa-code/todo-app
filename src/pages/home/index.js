@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 
+// Define the API base URL
+const API_BASE_URL = 'http://localhost:5000/api';
+
 
 
 const TaskPopup = ({ task, onClose, onEdit, isNew = false }) => {
