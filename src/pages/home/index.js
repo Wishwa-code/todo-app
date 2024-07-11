@@ -4,6 +4,10 @@ import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { LogoutOutlined } from '@ant-design/icons';
 import { FaSignOutAlt } from 'react-icons/fa';
+import { FaPlus } from 'react-icons/fa';  // For the add button
+import { IoMdClose } from 'react-icons/io';
+import { MdEdit , MdSave } from 'react-icons/md'; // This imports the pencil/edit icon
+ 
 
 
 
@@ -109,7 +113,7 @@ const TaskPopup = ({ task, onClose, onEdit, isNew = false, setIsPopupOpen }) => 
                             <select
                                 value={taskStatus}
                                 onChange={(e) => setTaskStatus(e.target.value)}
-                                className="bg-yellow-300 text-yellow-800 px-2 py-1 rounded"
+                                className="bg-gray-800 text-white px-2 py-1 rounded"
                             >
                                 <option value="Pending">Pending</option>
                                 <option value="Overdue">Overdue</option>
@@ -161,13 +165,23 @@ const TaskPopup = ({ task, onClose, onEdit, isNew = false, setIsPopupOpen }) => 
             
             <div className="mt-4 flex justify-between">
                 {isEditing ? (
-                    <button onClick={handleSave} className="bg-green-500 text-white px-4 py-2 rounded">
-                        {isNew ? 'Add Task' : 'Save Changes'}
-                    </button>
+                        
+                        <button 
+                          className="bg-black bg-opacity-30 text-white font-semibold py-2 px-4 rounded-full flex items-center space-x-2 shadow-md hover:bg-gray-800 transition duration-300"
+                          onClick={handleSave}
+                        >
+                          <MdSave className="w-5 h-5" />
+                          <span>Save</span>
+                        </button>
+                    
                 ) : (
-                    <button onClick={() => setIsEditing(true)} className="bg-blue-500 text-white px-4 py-2 rounded">Edit</button>
+                    <button onClick={() => setIsEditing(true)} className=" px-4 py-2 rounded">
+                      <MdEdit className="size-5" />
+                    </button>
                 )}
-                <button onClick={onClose} className="bg-white text-black px-4 py-2 rounded">Close</button>
+                <button onClick={onClose} className=" px-4 py-2 rounded">
+                  <IoMdClose className="size-5" />
+                </button>
             </div>
         </div>
       </div>
@@ -200,7 +214,7 @@ const DashboardPage = () => {
 
   const fetchBackgroundImage = async () => {
     try {
-      const response = await axios.get('https://api.unsplash.com/photos/random?query=sunset&client_id=GkhuiveA_tnwGApEcFQEEAkrRKL2TzG50uYA4gSbEUU');
+      const response = await axios.get('https://api.unsplash.com/photos/random?query=sunset&client_id=cx9S-4M6v92i38IqXh7SSDV7etPtB_-AsL3KXH-0bf4');
       setBackgroundImage(response.data.urls.regular);
     } catch (error) {
       console.error('Error fetching background image:', error);
@@ -308,7 +322,7 @@ const DashboardPage = () => {
     <div 
       className="min-h-screen bg-cover bg-center bg-fixed flex items-center justify-center relative"
       style={{ backgroundImage: `url(${backgroundImage})` }}
-    >
+    ><div className='w-full'>
       <div className="text-white text-center w-2/5 mx-auto">
         <div class="py-2 absolute top-6 right-8">
             <button onClick={handleLogout} className="">
@@ -338,7 +352,9 @@ const DashboardPage = () => {
                 className="mr-3"
               />
               <span 
-                className={task.completed ? 'line-through' : ''}
+                 className={`${task.completed ? 'line-through' : ''} ${
+                  hoveredTask === task.id ? 'text-yellow-300' : 'text-white'
+                } transition-colors duration-200`}
                 onClick={() => setSelectedTask(task)}
               >
                 {task.text}
@@ -357,25 +373,37 @@ const DashboardPage = () => {
             </div>
           ))}
           <button 
-            className="mt-4 text-sm underline"
+            className="flex justify-center mx-auto space-x-2 text-white font-semibold text-lg hover:opacity-80 transition duration-300 pl-3"
             onClick={() => setShowAllTasks(!showAllTasks)}
           >
-            {showAllTasks ? 'Show less' : 'Show more'}
+            <span className='text-sm font-normal'>{showAllTasks ? 'Show less' : 'Show more'}</span>
+            {showAllTasks ? (
+              <svg className="w-5 h-4 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 15l7-7 7 7"></path>
+              </svg>
+            ) : (
+              <svg className="w-5 h-4 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            )}
           </button>
           
         </div>
-        <div>
-        <button 
-            className="mt-4 ml-4 bg-green-500 text-white px-4 py-2 rounded"
-            onClick={() => setIsAddingTask(true)}
-          >
-            Add Task
-          </button>
+        <div className='flex justify-center mt-7 ml-0'>
+            <button 
+              class="bg-black bg-opacity-30 text-white font-semibold py-2 px-4 rounded-full flex align-center items-center space-x-2 shadow-md hover:bg-gray-800 transition duration-300"
+              onClick={() => setIsAddingTask(true)}
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+              </svg>
+              <span>add task</span>
+            </button>
         </div>
-
-        <div className="mt-8 p-4 rounded-lg">
-          <p className="italic">"{quote.text}"</p>
-          <p className="mt-2">- {quote.author}</p>
+        </div>
+        <div className="inline-block mt-8 p-4 rounded-lg w-full">
+          <p className="text-white italic">"{quote.text}"</p>
+          <p className="text-white mt-1">- {quote.author}</p>
         </div>
       </div>
       {(selectedTask || isAddingTask) && (
