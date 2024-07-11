@@ -214,7 +214,7 @@ const DashboardPage = () => {
 
   const fetchBackgroundImage = async () => {
     try {
-      const response = await axios.get('https://api.unsplash.com/photos/random?query=sunset&client_id=cx9S-4M6v92i38IqXh7SSDV7etPtB_-AsL3KXH-0bf4');
+      const response = await axios.get('https://api.unsplash.com/photos/random?query=sunset&client_id=TMv6AuFLZn9IwgF8L7rtoxdfAIT1uJTJ9paDtzWza04');
       setBackgroundImage(response.data.urls.regular);
     } catch (error) {
       console.error('Error fetching background image:', error);
