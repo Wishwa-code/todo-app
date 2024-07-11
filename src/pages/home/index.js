@@ -1,19 +1,28 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
+
 
 // Define the API base URL
 const API_BASE_URL = 'http://localhost:5000/api';
 
+// Create an axios instance with base URL
+const api = axios.create({
+  baseURL: API_BASE_URL,
+});
 
 
-const TaskPopup = ({ task, onClose, onEdit, isNew = false }) => {
+
+const TaskPopup = ({ task, onClose, onEdit, isNew = false, setIsPopupOpen }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [editedTask, setEditedTask] = useState(task || { text: '', description: '', completed: false });
     const popupRef = useRef(null);
     const [isAddingTask, setIsAddingTask] = useState(false);
     const [taskStatus, setTaskStatus] = useState(task?.status || 'Pending');
+    const [dueDate, setDueDate] = useState(task?.dueDate ? new Date(task.dueDate) : null);
 
-
+    console.log(task);
   
     useEffect(() => {
       const handleClickOutside = (event) => {
@@ -27,10 +36,22 @@ const TaskPopup = ({ task, onClose, onEdit, isNew = false }) => {
         document.removeEventListener('mousedown', handleClickOutside);
       };
     }, [onClose]);
+
+    useEffect(() => {
+      setIsPopupOpen(true);
+      return () => setIsPopupOpen(false);
+    }, [setIsPopupOpen]);
   
-    const handleSave = () => {
-      onEdit({ ...editedTask, status: taskStatus });
-      setIsEditing(false);
+  
+    const handleSave = async () => {
+      try {
+        const updatedTask = { ...editedTask, status: taskStatus , dueDate: dueDate};
+        await onEdit(updatedTask);
+        setIsEditing(false);
+      } catch (error) {
+        console.error('Error saving task:', error);
+        // Handle error (e.g., show error message to user)
+      }
     };
 
     useEffect(() => {
@@ -38,11 +59,34 @@ const TaskPopup = ({ task, onClose, onEdit, isNew = false }) => {
           setIsEditing(true); // Set isEditing to true when it's a new task
         }
       }, [isNew]);
+
+    const formatDate = (dateString) => {
+      const date = new Date(dateString);
+      const options = { weekday: 'short', day: 'numeric', month: 'short' };
+      return date.toLocaleDateString('en-US', options).replace(/(\w+)\s(\d+)\s(\w+)/, (_, weekday, day, month) => 
+        `${weekday}, ${day} ${month.toLowerCase()}`
+      );
+    };  
+
+    const getStatusColor = (status) => {
+      switch (status.toLowerCase()) {
+        case 'pending':
+          return 'bg-yellow-200 text-yellow-800';
+        case 'completed':
+          return 'bg-green-200 text-green-800';
+        case 'overdue':
+          return 'bg-red-200 text-red-800';
+        case 'upcoming':
+          return 'bg-blue-200 text-blue-800';
+        default:
+          return 'bg-gray-200 text-gray-800';
+      }
+    };
   
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div ref={popupRef} className="bg-black bg-opacity-70 text-white p-6 rounded-lg max-w-lg w-full">
-            {isNew || task ? ( // Check if isNew or task exists
+        <div ref={popupRef} className="bg-black bg-opacity-70 text-white p-6 rounded-lg w-2/5 drop-shadow-md">
+            {isNew || task ? ( // Check if isNew or task exists\
                 isEditing ? (
                     <>
                         <input
@@ -68,14 +112,42 @@ const TaskPopup = ({ task, onClose, onEdit, isNew = false }) => {
                                 <option value="Completed">Completed</option>
                                 <option value="Upcoming">Upcoming</option>
                             </select>
-                                <span>Mon, 4 dec</span>
+                            <DatePicker
+                                selected={dueDate}
+                                onChange={(date) => setDueDate(date)}
+                                showTimeSelect
+                                timeFormat="HH:mm"
+                                timeIntervals={15}
+                                timeCaption="Time"
+                                dateFormat="MMMM d, yyyy h:mm aa"
+                                className="bg-gray-800 text-white p-2 rounded cursor-pointer"
+                                placeholderText="Select due date and time"
+                                popperClassName="react-datepicker-right"
+                                popperPlacement="bottom-end"
+                                customInput={
+                                  <button className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition duration-300">
+                                    {dueDate ? dueDate.toLocaleString() : 'Set Due Date'}
+                                  </button>
+                                }
+                              />
                         </div>
                     </>
                 ) : (
-                    <>
-                        <h2 className="text-2xl font-bold mb-2">{task.text}</h2>
-                        <p className="mb-4">{task.description || 'This is the description of the final tasks. This is the description of the final tasks This is the description of the final tasks This'}</p>
-                        <h4 className="">{taskStatus}</h4>
+                    <> 
+                        <div className="flex flex-col ">
+                          <div className="flex flex-row justify-between	">
+                            <div className="flex flex-row">
+                              <h2 className="text-2xl font-bold mb-2">{task.text}</h2>
+                              <h4 className={`my-auto px-2 py-1  ml-4 rounded-3xl text-sm font-semibold ${getStatusColor(taskStatus)}`}>
+                                  {taskStatus}
+                              </h4>
+                            </div>
+                            
+                            <h4 className="">{formatDate(dueDate)}</h4>
+                          </div>
+                            <p className="mt-4 mb-4 text-left">{task.description || 'This is the description of the final tasks. This is the description of the final tasks This is the description of the final tasks This'}</p>
+                            
+                        </div>
                     </>
                 )
             ) : (
@@ -100,27 +172,22 @@ const TaskPopup = ({ task, onClose, onEdit, isNew = false }) => {
 
 const DashboardPage = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [tasks, setTasks] = useState([
-    { id: 1, text: 'Finalize Presentation', completed: false },
-    { id: 2, text: 'Change the dataset', completed: false },
-    { id: 3, text: 'Fix the bug', completed: true },
-    { id: 4, text: 'Update documentation', completed: false },
-    { id: 5, text: 'Review pull requests', completed: false },
-    { id: 6, text: 'Prepare for team meeting', completed: false },
-    { id: 7, text: 'Refactor legacy code', completed: false },
-    { id: 8, text: 'Write unit tests', completed: false },
-    { id: 9, text: 'Optimize database queries', completed: false },
-    { id: 10, text: 'Deploy to production', completed: false },
-  ]);
+  const [tasks, setTasks] = useState([]);
   const [showAllTasks, setShowAllTasks] = useState(false);
   const [backgroundImage, setBackgroundImage] = useState('');
   const [quote, setQuote] = useState({ text: '', author: '' });
   const [selectedTask, setSelectedTask] = useState(null);
   const [hoveredTask, setHoveredTask] = useState(null);
   const [isAddingTask, setIsAddingTask] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [isPopupOpen, setIsPopupOpen] = useState(false);
+
+
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    fetchTasks();
     fetchBackgroundImage();
     fetchQuote();
     return () => clearInterval(timer);
@@ -128,10 +195,25 @@ const DashboardPage = () => {
 
   const fetchBackgroundImage = async () => {
     try {
-      const response = await axios.get('https://api.unsplash.com/photos/random?query=sunset&client_id=39-2vQBMrUxDY_q6uu1zsXZQgy6upcIKtQgd1JAfU0Y');
+      const response = await axios.get('https://api.unsplash.com/photos/random?query=sunset&client_id=GkhuiveA_tnwGApEcFQEEAkrRKL2TzG50uYA4gSbEUU');
       setBackgroundImage(response.data.urls.regular);
     } catch (error) {
       console.error('Error fetching background image:', error);
+    }
+  };
+
+  const fetchTasks = async () => {
+    setIsLoading(true);
+    try {
+      const response = await api.get('/tasks');
+      console.log(response.data)
+      setTasks(response.data);
+      setError(null);
+    } catch (error) {
+      console.error('Error fetching tasks:', error);
+      setError('Failed to fetch tasks. Please try again later.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -144,42 +226,71 @@ const DashboardPage = () => {
     }
   };
 
-  const handleEditTask = (editedTask) => {
-    if (editedTask.id) {
-      // Editing existing task
-      setTasks(tasks.map(task => task.id === editedTask.id ? editedTask : task));
-    } else {
-      // Adding new task
-      const newTask = { ...editedTask, id: Date.now() };
-      setTasks([...tasks, newTask]);
+  const handleEditTask = async (editedTask) => {
+    try {
+      if (editedTask.id) {
+        console.log(editedTask);
+        // Editing existing task
+        await api.put(`/tasks/${editedTask.id}`, editedTask);
+      } else {
+        // Adding new task
+        console.log(editedTask);
+
+        await api.post('/tasks', editedTask);
+      }
+      await fetchTasks(); // Refresh the task list
+      setSelectedTask(null);
+      setIsAddingTask(false);
+    } catch (error) {
+      console.error('Error editing/adding task:', error);
+      // Handle error (e.g., show error message to user)
     }
-    setSelectedTask(null);
-    setIsAddingTask(false);
   };
 
-  const toggleTask = (id) => {
-    setTasks(tasks.map(task => 
-      task.id === id ? { ...task, completed: !task.completed } : task
-    ));
+  const toggleTask = async (id) => {
+    try {
+      const taskToToggle = tasks.find(task => task.id === id);
+      const updatedTask = { ...taskToToggle, completed: !taskToToggle.completed };
+      await api.put(`/tasks/${id}`, updatedTask);
+      await fetchTasks(); // Refresh the task list
+    } catch (error) {
+      console.error('Error toggling task:', error);
+      // Handle error (e.g., show error message to user)
+    }
   };
 
-  const deleteTask = (id) => {
-    setTasks(tasks.filter(task => task.id !== id));
+  const deleteTask = async (id) => {
+    try {
+      await api.delete(`/tasks/${id}`);
+      await fetchTasks(); // Refresh the task list
+    } catch (error) {
+      console.error('Error deleting task:', error);
+      // Handle error (e.g., show error message to user)
+    }
   };
 
   const visibleTasks = showAllTasks ? tasks : tasks.slice(0, 3);
+
+  if (isLoading) {
+    return <div>Loading tasks...</div>;
+  }
+
+  if (error) {
+    return <div>Error: {error}</div>;
+  }
 
   return (
     <div 
       className="min-h-screen bg-cover bg-center bg-fixed flex items-center justify-center relative"
       style={{ backgroundImage: `url(${backgroundImage})` }}
     >
-      <div className="text-white text-center max-w-2xl mx-auto">
+      <div className="text-white text-center w-2/5 mx-auto">
         <h1 className="text-6xl font-bold mb-4">
           {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
         </h1>
         <h2 className="text-3xl mb-8">Good evening, Wishwa.</h2>
         <div className="bg-black bg-opacity-50 rounded-lg p-6">
+          
           {visibleTasks.map(task => (
             <div 
               key={task.id} 
@@ -237,11 +348,16 @@ const DashboardPage = () => {
           <p className="mt-2">- {quote.author}</p>
         </div>
       </div>
+      {(selectedTask || isAddingTask) && (
+        <div className="fixed inset-0 bg-black bg-opacity-30 backdrop-filter backdrop-blur-sm z-10"></div>
+      )}
       {selectedTask && (
         <TaskPopup 
           task={selectedTask} 
           onClose={() => setSelectedTask(null)} 
           onEdit={handleEditTask}
+          setIsPopupOpen={setIsPopupOpen}
+
         />
       )}
       {isAddingTask && (
@@ -250,6 +366,8 @@ const DashboardPage = () => {
           onEdit={handleEditTask}
           isNew={true}
           task={{ text: "", description: "", completed: false }} // Empty task object
+          setIsPopupOpen={setIsPopupOpen}
+
         />
       )}
     </div>
