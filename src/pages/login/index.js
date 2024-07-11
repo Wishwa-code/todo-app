@@ -11,7 +11,7 @@ const LoginForm = () => {
     e.preventDefault();
     setError('');
     try {
-      const apiURL = 'http://localhost:5001/login';
+      const apiURL = 'http://localhost:5000/login';
       const response = await axios.post(apiURL, credentials);
       const { password, ...safeUserData } = response.data;
       if (!safeUserData.name) {
@@ -19,7 +19,7 @@ const LoginForm = () => {
         return;
       }
       localStorage.setItem('userInfo', JSON.stringify(safeUserData));
-      navigate('/identify', { replace: true });
+      navigate('/home', { replace: true });
     } catch (error) {
       setError(error?.response?.data?.error || 'Login failed. Please try again.');
     }

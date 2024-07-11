@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
+import { LogoutOutlined } from '@ant-design/icons';
+
 
 
 // Define the API base URL
@@ -182,6 +184,7 @@ const DashboardPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isPopupOpen, setIsPopupOpen] = useState(false);
+  const [userName, setUserName] = useState();
 
 
 
@@ -202,6 +205,11 @@ const DashboardPage = () => {
     }
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem('userInfo'); 
+    window.location.href = '/'; 
+  };
+
   const fetchTasks = async () => {
     setIsLoading(true);
     try {
@@ -216,6 +224,14 @@ const DashboardPage = () => {
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    const storedUserInfo = localStorage.getItem('userInfo');
+    if (storedUserInfo) {
+      const userInfo = JSON.parse(storedUserInfo);
+      setUserName(userInfo.name || 'Guest');
+    }
+  }, []);
 
   const fetchQuote = async () => {
     try {
@@ -285,10 +301,15 @@ const DashboardPage = () => {
       style={{ backgroundImage: `url(${backgroundImage})` }}
     >
       <div className="text-white text-center w-2/5 mx-auto">
+        <div class="py-2 absolute top-10 right-10">
+            <button onClick={handleLogout} className="">
+              <LogoutOutlined className="" />
+            </button>
+        </div>
         <h1 className="text-6xl font-bold mb-4">
           {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
         </h1>
-        <h2 className="text-3xl mb-8">Good evening, Wishwa.</h2>
+        <h2 className="text-3xl mb-8">Good evening,{userName}</h2>
         <div className="bg-black bg-opacity-50 rounded-lg p-6">
           
           {visibleTasks.map(task => (
