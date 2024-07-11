@@ -3,13 +3,15 @@ import axios from 'axios';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { LogoutOutlined } from '@ant-design/icons';
+import { FaSignOutAlt } from 'react-icons/fa';
 
 
 
-// Define the API base URL
+
+// API base URL
 const API_BASE_URL = 'http://localhost:5000/api';
 
-// Create an axios instance with base URL
+// axios instance with base URL
 const api = axios.create({
   baseURL: API_BASE_URL,
 });
@@ -52,13 +54,13 @@ const TaskPopup = ({ task, onClose, onEdit, isNew = false, setIsPopupOpen }) => 
         setIsEditing(false);
       } catch (error) {
         console.error('Error saving task:', error);
-        // Handle error (e.g., show error message to user)
+        // Handle error 
       }
     };
 
     useEffect(() => {
         if (isNew) {
-          setIsEditing(true); // Set isEditing to true when it's a new task
+          setIsEditing(true); // when adding new item state is change to editing to reuse the same component
         }
       }, [isNew]);
 
@@ -88,7 +90,7 @@ const TaskPopup = ({ task, onClose, onEdit, isNew = false, setIsPopupOpen }) => 
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
         <div ref={popupRef} className="bg-black bg-opacity-70 text-white p-6 rounded-lg w-2/5 drop-shadow-md">
-            {isNew || task ? ( // Check if isNew or task exists\
+            {isNew || task ? ( // Check if is new task or task is available
                 isEditing ? (
                     <>
                         <input
@@ -153,7 +155,7 @@ const TaskPopup = ({ task, onClose, onEdit, isNew = false, setIsPopupOpen }) => 
                     </>
                 )
             ) : (
-                <p>Loading task...</p> // Or any suitable message
+                <p>Loading task...</p> 
             )}
 
             
@@ -254,12 +256,12 @@ const DashboardPage = () => {
 
         await api.post('/tasks', editedTask);
       }
-      await fetchTasks(); // Refresh the task list
+      await fetchTasks(); // Refreshing task lists
       setSelectedTask(null);
       setIsAddingTask(false);
     } catch (error) {
       console.error('Error editing/adding task:', error);
-      // Handle error (e.g., show error message to user)
+      // Handle error 
     }
   };
 
@@ -268,21 +270,28 @@ const DashboardPage = () => {
       const taskToToggle = tasks.find(task => task.id === id);
       const updatedTask = { ...taskToToggle, completed: !taskToToggle.completed };
       await api.put(`/tasks/${id}`, updatedTask);
-      await fetchTasks(); // Refresh the task list
+      await fetchTasks(); // Refreshing the task list
     } catch (error) {
       console.error('Error toggling task:', error);
-      // Handle error (e.g., show error message to user)
+      // Handle error 
     }
   };
 
   const deleteTask = async (id) => {
     try {
       await api.delete(`/tasks/${id}`);
-      await fetchTasks(); // Refresh the task list
+      await fetchTasks(); // Refreshing task list
     } catch (error) {
       console.error('Error deleting task:', error);
-      // Handle error (e.g., show error message to user)
+      // Handle error 
     }
+  };
+
+  const getGreeting = (hour) => {
+    if (hour >= 5 && hour < 12) return "Good morning";
+    if (hour >= 12 && hour < 17) return "Good afternoon";
+    if (hour >= 17 && hour < 21) return "Good evening";
+    return "Good night";
   };
 
   const visibleTasks = showAllTasks ? tasks : tasks.slice(0, 3);
@@ -301,15 +310,15 @@ const DashboardPage = () => {
       style={{ backgroundImage: `url(${backgroundImage})` }}
     >
       <div className="text-white text-center w-2/5 mx-auto">
-        <div class="py-2 absolute top-10 right-10">
+        <div class="py-2 absolute top-6 right-8">
             <button onClick={handleLogout} className="">
-              <LogoutOutlined className="" />
+              <FaSignOutAlt className="size-5" />
             </button>
         </div>
         <h1 className="text-6xl font-bold mb-4">
           {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
         </h1>
-        <h2 className="text-3xl mb-8">Good evening,{userName}</h2>
+        <h2 className="text-3xl mb-8 font-sans">{getGreeting(currentTime.getHours())},{userName}</h2>
         <div className="bg-black bg-opacity-50 rounded-lg p-6">
           
           {visibleTasks.map(task => (
